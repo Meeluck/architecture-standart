@@ -1,0 +1,44 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+LAYOUT_LEFT_RIGHT()
+
+title Схема интеграции приложений процесса открытия депозита
+
+Person(customer, "Клиент", "Обращается за открытием депозита")
+Person(callOperator, "Оператор кол-центра", "Принимает обращения клиентов")
+Person(branchEmployee, "Сотрудник фронт-офиса отделения", "Оформляет депозит в отделении")
+Person(depositBackoffice, "Сотрудник бэк-офиса депозитных продуктов", "Обрабатывает депозитные заявки и определяет ставку")
+Person(creditBackoffice, "Сотрудник бэк-офиса кредитных продуктов", "Анализирует кредитный риск клиента")
+
+System_Boundary(bank, "Банк «Стандарт»") {
+
+  Container(callCenterSystem, "Система кол-центра", "React + Java Spring Boot + PostgreSQL", "Регистрирует обращения клиентов и передаёт заявки в АБС")
+
+  Container(abs, "АБС", "Delphi client + Oracle + PL/SQL", "Основная банковская система для обработки депозитов, ставок, договоров и документов")
+
+  Container(smsGateway, "СМС-шлюз", "Интеграционный сервис", "Передаёт сообщения внешнему телеком-оператору")
+
+  Container(ibank, "Интернет-банк", "ASP.NET MVC 4.5 / .NET Framework / MS SQL", "Цифровой банковский канал; в текущем процессе открытия депозита напрямую не участвует")
+
+  Container(site, "Сайт", "PHP + React", "Публичный цифровой канал банка; в текущем процессе открытия депозита напрямую не участвует")
+}
+
+System_Ext(telco, "Телеком-оператор", "Внешний оператор доставки СМС")
+
+Rel(customer, callOperator, "Уточняет условия открытия депозита")
+Rel(callOperator, callCenterSystem, "Регистрирует обращение")
+Rel(callCenterSystem, abs, "Передаёт заявку по депозиту")
+
+Rel(customer, branchEmployee, "Приходит в отделение для открытия депозита")
+Rel(branchEmployee, abs, "Создаёт депозит, оформляет документы, загружает подписанные документы")
+
+Rel(depositBackoffice, abs, "Обрабатывает заявки, определяет ставку, фиксирует результат")
+Rel(creditBackoffice, abs, "Анализирует кредитный риск клиента в своём контуре")
+
+Rel(abs, smsGateway, "Передаёт данные для отправки СМС")
+Rel(smsGateway, telco, "Передаёт сообщение на доставку")
+Rel(telco, customer, "Доставляет СМС с информацией о ставке")
+
+SHOW_LEGEND()
+@enduml
