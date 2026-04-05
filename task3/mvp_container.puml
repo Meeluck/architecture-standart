@@ -49,7 +49,7 @@ Container_Boundary(absBoundary, "АБС") {
 }
 
 System(callCenterSystem, "Система кол-центра", "Платформа подрядчика, с возможностью расширения")
-System_Ext(smsGateway, "СМС-шлюз", "Интеграционный сервис")
+System(smsGateway, "СМС-шлюз", "Интеграционный сервис")
 System_Ext(telco, "Телеком-оператор", "Внешний оператор доставки SMS")
 
 Rel(newCustomer, siteFrontend, "Просматривает депозиты,\nоставляет заявку", "HTTPS/TLS")
