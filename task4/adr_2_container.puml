@@ -1,0 +1,52 @@
+@startuml
+skinparam RankSep 90
+skinparam Nodesep 55
+
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+
+title Диаграмма контейнеров — публикация ставок для внутреннего и партнёрского кол-центров
+
+Person(callOperator, "Оператор кол-центра банка")
+Person_Ext(partnerOperator, "Оператор партнёрского кол-центра")
+Person(depositBackoffice, "Сотрудник бэк-офиса депозитов")
+Person(creditBackoffice, "Сотрудник бэк-офиса кредитов")
+
+System_Boundary(absBoundary, "АБС") {
+    Container(absRateModule, "Модуль управления ставками", "Delphi + PL/SQL","Ведение актуальных ставок и согласование специальных условий")
+    ContainerDb(absDb, "Oracle DB", "Oracle", "Хранит ставки и связанные банковские данные") 
+}
+
+System_Boundary(digitalBoundary, "Цифровой контур открытия депозитов MVP") {
+    Container(absIntegrationAdapter, "ABS Integration Adapter", "ASP.NET Core","Синхронизирует актуальные ставки из АБС в цифровой контур")
+    Container(catalogApi, "Catalog API", "ASP.NET Core","Единый API чтения депозитных продуктов и актуальных ставок для внутренних каналов")
+    ContainerDb(ratesReadModel, "Rates Read Model DB", "MS SQL","Хранит опубликованную read-модель актуальных ставок")
+    Container(rateFileExportService, "Rate File Export Service", "ASP.NET Core","Формирует файл выгрузки ставок для партнёрского кол-центра")
+    ContainerDb(fileRegistry, "File Registry", "MS SQL","Хранит версии файлов и статусы их формирования/передачи")
+}
+
+System_Boundary(internalCCBoundary, "Внутренний кол-центр банка") {
+    Container(callCenterSystem, "Система кол-центра", "React + Spring Boot + PostgreSQL","Рабочая система операторов внутреннего кол-центра")
+}
+
+System_Ext(partnerCallCenter, "Система партнёрского кол-центра","Внешняя система, принимает ставки в виде файлов")
+
+Rel(depositBackoffice, absRateModule, "Обновляет ставки")
+Rel(creditBackoffice, absRateModule, "Согласует специальные условия")
+Rel(absRateModule, absDb, "Читает и сохраняет ставки")
+
+Rel(absIntegrationAdapter, absRateModule, "Получает актуальные ставки")
+Rel(absIntegrationAdapter, ratesReadModel, "Обновляет опубликованную read-модель ставок")
+
+Rel(catalogApi, ratesReadModel, "Читает актуальные ставки")
+Rel(callCenterSystem, catalogApi, "Запрашивает актуальные ставки для консультации")
+
+Rel(rateFileExportService, ratesReadModel, "Читает актуальные ставки")
+Rel(rateFileExportService, fileRegistry, "Регистрирует версии и статусы файлов")
+Rel(rateFileExportService, partnerCallCenter, "Передаёт файл со ставками")
+
+Rel(callOperator, callCenterSystem, "Консультирует клиентов по ставкам")
+Rel(partnerOperator, partnerCallCenter, "Консультирует клиентов по ставкам")
+
+SHOW_LEGEND()
+@enduml

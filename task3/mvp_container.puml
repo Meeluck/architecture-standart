@@ -1,11 +1,11 @@
 @startuml
-' skinparam linetype polyline
+skinparam linetype polyline
 skinparam RankSep 90
 skinparam Nodesep 50
 
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
 
-' LAYOUT_LEFT_RIGHT()
+ LAYOUT_LEFT_RIGHT()
 
 title Диаграмма контейнеров — MVP цифрового открытия депозитов
 
@@ -16,8 +16,9 @@ Person(branchEmployee, "Сотрудник фронт-офиса отделен�
 Person(depositBackoffice, "Сотрудник бэк-офиса депозитов")
 Person(creditBackoffice, "Сотрудник бэк-офиса кредитов")
 
+
+
 System_Boundary(solution, "Цифровой контур открытия депозитов MVP") {
-  Container(siteFrontend, "Витрина депозитов на сайте", "PHP + React", "Отображает список депозитов и ставок, принимает заявку нового клиента")
   Container(catalogApi, "Catalog API / Сервис витрины депозитов", "ASP.NET Core", "Отдаёт список депозитов, публичные ставки и персональные предложения для цифровых каналов")
   Container(applicationApi, "Deposit Application API", "ASP.NET Core", "Принимает заявки с сайта и интернет-банка, валидирует их, сохраняет и запускает обработку")
   Container(smsConfirmation, "SMS Confirmation Service", "ASP.NET Core", "Генерирует и проверяет OTP-коды для подтверждения заявок в интернет-банке")
@@ -28,6 +29,8 @@ System_Boundary(solution, "Цифровой контур открытия деп
   ContainerDb(readDb, "Rates Read Model", "MS SQL","Хранит витрину депозитов, публичные ставки, персональные предложения и справочные данные")
   ContainerQueue(kafka, "Kafka", "Kafka", "Шина событий между новым цифровым контуром и интеграционным адаптером")
 }
+
+Container(siteFrontend, "Витрина депозитов на сайте", "PHP + React", "Отображает список депозитов и ставок, принимает заявку нового клиента")
 
 Container_Boundary(ibankBoundary, "Интернет-банк") {
   Container(ibankUi, "Web UI интернет-банка", "ASP.NET MVC 4.5","Основной пользовательский интерфейс интернет-банка")
@@ -45,7 +48,7 @@ Container_Boundary(absBoundary, "АБС") {
   ContainerDb(absDb, "Oracle DB", "Oracle", "Операционные банковские данные")
 }
 
-System_Ext(callCenterSystem, "Система кол-центра", "Платформа подрядчика")
+System(callCenterSystem, "Система кол-центра", "Платформа подрядчика, с возможностью расширения")
 System_Ext(smsGateway, "СМС-шлюз", "Интеграционный сервис")
 System_Ext(telco, "Телеком-оператор", "Внешний оператор доставки SMS")
 

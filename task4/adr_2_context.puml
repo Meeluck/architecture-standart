@@ -1,0 +1,38 @@
+@startuml
+skinparam RankSep 90
+skinparam Nodesep 60
+
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+
+title Контекстная диаграмма — публикация депозитных ставок для кол-центров
+
+Person(customer, "Клиент", "Звонит для консультации по депозитным ставкам")
+Person(callOperator, "Оператор кол-центра банка", "Консультирует клиентов по актуальным ставкам")
+Person_Ext(partnerOperator, "Оператор партнёрского кол-центра", "Консультирует клиентов по актуальным ставкам")
+Person(depositBackoffice, "Сотрудник бэк-офиса депозитов", "Ведёт и обновляет ставки")
+Person(creditBackoffice, "Сотрудник бэк-офиса кредитов", "Участвует в согласовании специальных ставок")
+
+System(abs, "АБС", "Основная банковская система") 
+
+System(mvp, "Цифровое открытие депозитов MVP", "Обеспечивает витрину депозитов и ставок, приём онлайн-заявок, SMS-подтверждение, передачу заявок в АБС и SMS-уведомления")
+
+System(callCenterSystem, "Система кол-центра", "Используется операторами банка для консультации клиентов")
+
+System_Ext(partnerCallCenter, "Система партнёрского кол-центра", "Внешняя система партнёра, получает ставки в виде файлов")
+
+Rel(customer, callOperator, "Обращается за консультацией")
+Rel(customer, partnerOperator, "Обращается за консультацией")
+
+Rel(callOperator, callCenterSystem, "Использует систему кол-центра")
+Rel(partnerOperator, partnerCallCenter, "Использует внешнюю систему")
+
+Rel(depositBackoffice, abs, "Обновляет и подтверждает ставки")
+Rel(creditBackoffice, abs, "Участвует в согласовании специальных ставок")
+
+Rel(abs, mvp, "Передаёт актуальные ставки")
+Rel(mvp, callCenterSystem, "Публикует актуальные ставки")
+Rel(mvp, partnerCallCenter, "Передаёт файл со ставками")
+
+SHOW_LEGEND()
+@enduml
