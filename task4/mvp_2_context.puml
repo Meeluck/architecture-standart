@@ -1,0 +1,52 @@
+@startuml
+' skinparam linetype ortho
+skinparam RankSep 90
+skinparam Nodesep 60
+
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+LAYOUT_LEFT_RIGHT()
+
+title V2 Контекстная диаграмма — MVP цифрового открытия депозитов
+
+Person(newCustomer, "Новый клиент", "Просматривает депозиты на сайте и подаёт заявку")
+Person(existingCustomer, "Действующий клиент", "Работает через интернет-банк")
+Person(callOperator, "Оператор кол-центра", "Обрабатывает заявки с сайта и связывается с клиентом")
+Person(branchEmployee, "Сотрудник фронт-офиса отделения", "Проводит идентификацию и завершает открытие депозита")
+Person(depositBackoffice, "Сотрудник бэк-офиса депозитов", "Обрабатывает заявки и подтверждает условия")
+Person(creditBackoffice, "Сотрудник бэк-офиса кредитов", "Согласует специальные ставки")
+
+System(mvp, "Цифровое открытие депозитов MVP", "Обеспечивает витрину депозитов и ставок, приём онлайн-заявок, SMS-подтверждение, передачу заявок в АБС и SMS-уведомления")
+
+System(site, "Сайт", "Публичный цифровой канал для новых клиентов")
+System(ibank, "Интернет-банк", "Цифровой канал для действующих клиентов")
+System(callCenterSystem, "Система кол-центра", "Система обработки обращений и лидов")
+System(abs, "АБС", "Основная банковская система")
+System(smsGateway, "СМС-шлюз", "Интеграционный сервис отправки SMS")
+System_Ext(telco, "Телеком-оператор", "Внешний оператор доставки SMS")
+System_Ext(partnerCallCenter, "Система партнёрского кол-центра", "Внешняя система партнёра, получает ставки в виде файлов")
+
+Rel(newCustomer, site, "Просматривает депозиты,\nоставляет заявку", "HTTPS/TLS")
+Rel(existingCustomer, ibank, "Просматривает предложения,\nподаёт заявку, подтверждает её", "HTTPS/TLS")
+
+Rel(site, mvp, "Запрашивает витрину депозитов,\nпередаёт заявку", "HTTPS/TLS")
+Rel(ibank, mvp, "Получает витрину ставок,\nсоздаёт заявку,\nинициирует и подтверждает OTP", "HTTPS/TLS")
+
+Rel(mvp, callCenterSystem, "Передаёт заявку с сайта\nПубликует актуальные ставки")
+Rel(mvp, partnerCallCenter, "Передаёт файл со ставками")
+Rel(callOperator, callCenterSystem, "Обрабатывает заявку,\nсвязывается с клиентом")
+
+Rel(mvp, abs, "Передаёт заявки,\nполучает статусы,\nсинхронизирует ставки", "Async integration")
+Rel(depositBackoffice, abs, "Обрабатывает заявки,\nподтверждает условия")
+Rel(creditBackoffice, abs, "Участвует в согласовании специальных ставок")
+Rel(branchEmployee, abs, "Открывает депозит,\nфиксирует результат")
+
+Rel(mvp, smsGateway, "Отправляет OTP и уведомления")
+Rel(smsGateway, telco, "Передаёт сообщения")
+Rel(telco, newCustomer, "Доставляет SMS")
+Rel(telco, existingCustomer, "Доставляет SMS")
+
+Rel(newCustomer, branchEmployee, "Проходит очную идентификацию в отделении")
+
+SHOW_LEGEND()
+@enduml
