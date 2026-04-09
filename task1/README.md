@@ -6,11 +6,11 @@
 
 - **Карту текущего IT-ландшафта.** В строках она должна содержать элементы организационной структуры, а в колонках — бизнес-возможности второго уровня. Например, в строке стоит кол-центр, а в колонке — продажи через кол-центр.
 
-![it landscape](/out/task1/integration_map/it_landscape.png)
+![it landscape](/out/task1/it_landscape_v2.png)
 
 - **Схему интеграции приложений с указанием участников процессов**.
 
-![it landscape](/out/task1/integration_map/integration_map.png)
+![it landscape](/out/task1/integration_map_v3.png)
 
 ## Процесс открытия депозита
 
