@@ -1,0 +1,33 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+title Контекстная диаграмма — публикация депозитных ставок в кол-центры
+
+Person(client, "Клиент", "Звонит в кол-центр для консультации по депозитным ставкам")
+Person(internalOperator, "Оператор кол-центра банка", "Консультирует клиента по телефону")
+Person(partnerOperator, "Оператор партнёрского кол-центра", "Консультирует клиента по телефону")
+Person(depositBackoffice, "Сотрудник бэк-офиса депозитов", "Ведёт и обновляет актуальные ставки")
+Person(creditBackoffice, "Сотрудник бэк-офиса кредитов", "Участвует в согласовании специальных ставок")
+
+System(absRateModule, "Модуль управления ставками в АБС", "Хранит, изменяет и согласует актуальные депозитные ставки")
+
+System(ratePublishing, "Публикация депозитных ставок", "Логически выделенная функция цифрового контура MVP: получает актуальные ставки из банковского контура и публикует их во внутренний и партнёрский кол-центры")
+
+System(internalCallCenter, "Система кол-центра банка", "Используется операторами внутреннего кол-центра для консультации клиентов")
+System_Ext(partnerCallCenter, "Внешняя система партнёрского кол-центра", "Используется оператором партнёрского кол-центра; получает ставки файлами")
+
+Rel(client, internalOperator, "Звонит за консультацией")
+Rel(client, partnerOperator, "Звонит за консультацией")
+
+Rel(internalOperator, internalCallCenter, "Просматривает актуальные ставки")
+Rel(partnerOperator, partnerCallCenter, "Просматривает актуальные ставки")
+
+Rel(depositBackoffice, absRateModule, "Изменяет / подтверждает актуальные ставки")
+Rel(creditBackoffice, absRateModule, "Согласует специальные ставки")
+
+Rel(absRateModule, ratePublishing, "Передаёт актуальные ставки через цифровой контур")
+Rel(ratePublishing, internalCallCenter, "Публикует актуальные ставки", "API / интеграция")
+Rel(ratePublishing, partnerCallCenter, "Передаёт файл со ставками", "Файловый обмен")
+
+SHOW_LEGEND()
+@enduml

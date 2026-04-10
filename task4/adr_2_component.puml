@@ -1,0 +1,62 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title Компонентная диаграмма — публикация депозитных ставок во внутренний и партнёрский кол-центры
+
+
+Person(internalOperator, "Оператор кол-центра банка")
+Person(partnerOperator, "Оператор партнёрского кол-центра")
+Person(depositBackoffice, "Сотрудник бэк-офиса депозитов")
+Person(creditBackoffice, "Сотрудник бэк-офиса кредитов")
+
+Container_Boundary(absBoundary, "АБС") {
+    Component(absRateModule, "Модуль управления ставками", "Delphi + PL/SQL", "Ведение актуальных ставок и согласование специальных условий")
+}
+
+Container_Boundary(absAdapterBoundary, "ABS Integration Adapter") {
+    Component(ratesChangeConsumer, "Rates Change Consumer", "ASP.NET Core", "Получает изменения ставок из АБС")
+    Component(ratesSyncOrchestrator, "Rates Sync Orchestrator", "ASP.NET Core", "Управляет синхронизацией ставок из АБС во внешний read-side слой")
+    Component(ratesReadModelUpdater, "Rates Read Model Updater", "ASP.NET Core", "Обновляет read-model ставок")
+}
+
+ContainerDb(ratesReadModelDb, "Rates Read Model DB", "MS SQL", "Актуальные ставки в формате публикации для внешних потребителей")
+
+Container_Boundary(ratesPublishingBoundary, "Call Center Rates Publishing Service") {
+    Component(internalRatesApi, "Internal Rates API", "ASP.NET Core", "Предоставляет внутреннему кол-центру актуальные ставки для консультации")
+    Component(partnerRatesExporter, "Partner Rates Exporter", "ASP.NET Core / Batch", "Формирует файл ставок для партнёрского кол-центра")
+    Component(fileDeliveryOrchestrator, "Partner File Delivery Orchestrator", "ASP.NET Core / Batch", "Управляет выгрузкой и передачей файла партнёру")
+    Component(exportStatusTracker, "Export Status Tracker", "ASP.NET Core", "Фиксирует статусы формирования и передачи файла")
+}
+
+ContainerDb(exportStatusDb, "Export Status DB", "MS SQL", "Статусы формирования и передачи файлов партнёру")
+
+Container_Boundary(callCenterBoundary, "Система кол-центра банка") {
+    Component(consultationUiExtension, "Consultation UI Extension", "React.js", "Расширение интерфейса оператора для просмотра актуальных депозитных ставок")
+    Component(ratesIntegrationBackend, "Rates Integration Backend", "Java Spring Boot", "Backend-компонент системы кол-центра, запрашивает актуальные ставки из цифрового контура и отдаёт их UI")
+}
+
+System_Ext(partnerCallCenter, "Внешняя система партнёрского кол-центра", "Система партнёра, принимает файл ставок")
+
+Rel(depositBackoffice, absRateModule, "Изменяет / подтверждает ставки")
+Rel(creditBackoffice, absRateModule, "Согласует специальные ставки")
+
+Rel(absRateModule, ratesChangeConsumer, "Передаёт изменения ставок")
+Rel(ratesChangeConsumer, ratesSyncOrchestrator, "Передаёт изменения")
+Rel(ratesSyncOrchestrator, ratesReadModelUpdater, "Запускает обновление read-model")
+Rel(ratesReadModelUpdater, ratesReadModelDb, "Обновляет ставки")
+
+Rel(internalRatesApi, ratesReadModelDb, "Читает актуальные ставки")
+Rel(partnerRatesExporter, ratesReadModelDb, "Читает актуальные ставки")
+Rel(fileDeliveryOrchestrator, partnerRatesExporter, "Запускает формирование файла")
+Rel(fileDeliveryOrchestrator, exportStatusTracker, "Передаёт статус операции")
+Rel(exportStatusTracker, exportStatusDb, "Сохраняет статусы")
+
+Rel(ratesIntegrationBackend, internalRatesApi, "Запрашивает актуальные ставки", "HTTP/API")
+Rel(consultationUiExtension, ratesIntegrationBackend, "Запрашивает ставки для экрана консультации")
+
+Rel(internalOperator, consultationUiExtension, "Просматривает актуальные ставки")
+Rel(fileDeliveryOrchestrator, partnerCallCenter, "Передаёт файл ставок", "Файловый обмен")
+Rel(partnerOperator, partnerCallCenter, "Просматривает актуальные ставки")
+
+SHOW_LEGEND()
+@enduml
