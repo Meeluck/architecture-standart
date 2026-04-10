@@ -5,7 +5,7 @@ title Компонентная диаграмма — публикация де�
 
 
 Person(internalOperator, "Оператор кол-центра банка")
-Person(partnerOperator, "Оператор партнёрского кол-центра")
+Person_Ext(partnerOperator, "Оператор партнёрского кол-центра")
 Person(depositBackoffice, "Сотрудник бэк-офиса депозитов")
 Person(creditBackoffice, "Сотрудник бэк-офиса кредитов")
 
@@ -15,16 +15,16 @@ Container_Boundary(absBoundary, "АБС") {
 
 Container_Boundary(absAdapterBoundary, "ABS Integration Adapter") {
     Component(ratesChangeConsumer, "Rates Change Consumer", "ASP.NET Core", "Получает изменения ставок из АБС")
-    Component(ratesSyncOrchestrator, "Rates Sync Orchestrator", "ASP.NET Core", "Управляет синхронизацией ставок из АБС во внешний read-side слой")
+    Component(ratesSyncOrchestrator, "Rates Sync Orchestrator", "ASP.NET Core", "Управляет синхронизацией ставок из АБС")
     Component(ratesReadModelUpdater, "Rates Read Model Updater", "ASP.NET Core", "Обновляет read-model ставок")
 }
 
 ContainerDb(ratesReadModelDb, "Rates Read Model DB", "MS SQL", "Актуальные ставки в формате публикации для внешних потребителей")
 
-Container_Boundary(ratesPublishingBoundary, "Call Center Rates Publishing Service") {
+Container_Boundary(ratesPublishingBoundary, "Call Center Rates Service") {
     Component(internalRatesApi, "Internal Rates API", "ASP.NET Core", "Предоставляет внутреннему кол-центру актуальные ставки для консультации")
-    Component(partnerRatesExporter, "Partner Rates Exporter", "ASP.NET Core / Batch", "Формирует файл ставок для партнёрского кол-центра")
-    Component(fileDeliveryOrchestrator, "Partner File Delivery Orchestrator", "ASP.NET Core / Batch", "Управляет выгрузкой и передачей файла партнёру")
+    Component(partnerRatesExporter, "Partner Rates Exporter", "ASP.NET Core", "Формирует файл ставок для партнёрского кол-центра")
+    Component(fileDeliveryOrchestrator, "Partner File Delivery Orchestrator", "ASP.NET Core", "Управляет выгрузкой и передачей файла партнёру")
     Component(exportStatusTracker, "Export Status Tracker", "ASP.NET Core", "Фиксирует статусы формирования и передачи файла")
 }
 
