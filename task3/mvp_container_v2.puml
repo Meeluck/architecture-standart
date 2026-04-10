@@ -1,0 +1,92 @@
+@startuml
+skinparam linetype polyline
+skinparam RankSep 90
+skinparam Nodesep 50
+
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+LAYOUT_LEFT_RIGHT()
+
+title Диаграмма контейнеров — MVP открытия депозитов\n(акцент на интернет-банк и АБС)
+
+Person(newCustomer, "Новый клиент")
+Person(existingCustomer, "Действующий клиент")
+Person(callOperator, "Оператор кол-центра")
+Person(branchEmployee, "Сотрудник фронт-офиса отделения")
+Person(depositBackoffice, "Сотрудник бэк-офиса депозитов")
+Person(creditBackoffice, "Сотрудник бэк-офиса кредитов")
+
+Container(siteFrontend, "Витрина депозитов на сайте", "PHP + React", "Показывает депозиты и ставки, принимает заявку нового клиента")
+
+Container_Boundary(ibankBoundary, "Интернет-банк") {
+  Container(ibankMonolith, "Интернет-банк (монолит)", "ASP.NET MVC 4.5 / .NET Framework 4.5", "Платформа подрядчика.\nВ рамках MVP расширяется разделом депозитов, подачей заявки, подтверждением по SMS-коду и вызовами API цифрового контура")
+  ContainerDb(ibankDb, "MS SQL DB интернет-банка", "MS SQL", "Основная БД интернет-банка")
+}
+
+System_Boundary(solution, "Цифровой контур открытия депозитов MVP") {
+  Container(catalogService, "Deposit Catalog Service", "ASP.NET Core", "Отдаёт витрину депозитов, публичные ставки и персональные предложения для цифровых каналов")
+  Container(applicationService, "Deposit Application Service", "ASP.NET Core", "Принимает заявки с сайта и интернет-банка, сохраняет их, передаёт лид с сайта в кол-центр, публикует события обработки")
+  Container(notificationOtpService, "Notification & OTP Service", "ASP.NET Core", "Генерирует и проверяет OTP-коды, отправляет SMS-уведомления по событиям процесса")
+  Container(absAdapter, "ABS Integration Adapter", "ASP.NET Core", "Обменивается событиями с цифровым контуром и выполняет интеграцию с модулями АБС")
+  ContainerDb(appDb, "Application DB", "MS SQL", "Хранит цифровые заявки, технические статусы, OTP metadata и аудит")
+  ContainerDb(readDb, "Rates Read Model", "MS SQL", "Хранит витрину депозитов, публичные ставки, персональные предложения и справочные данные")
+  ContainerQueue(kafka, "Kafka", "Kafka", "Шина событий между цифровым контуром и адаптером АБС")
+}
+
+Container_Boundary(absBoundary, "АБС") {
+  Container(absApplicationModule, "Модуль обработки заявок", "Delphi + PL/SQL", "Бэк-офис обрабатывает заявку и подтверждает условия депозита")
+  Container(absRateModule, "Модуль управления ставками", "Delphi + PL/SQL", "Ведение актуальных ставок и согласование специальных условий")
+  Container(absDepositModule, "Модуль открытия депозита", "Delphi + PL/SQL", "Создание депозита, фиксация условий, статуса и документов")
+  ContainerDb(absDb, "Oracle DB", "Oracle", "Операционные банковские данные")
+}
+
+System(callCenterSystem, "Система кол-центра", "Платформа подрядчика")
+System(smsGateway, "СМС-шлюз", "Интеграционный сервис")
+System_Ext(telco, "Телеком-оператор", "Внешний оператор доставки SMS")
+
+Rel(newCustomer, siteFrontend, "Просматривает депозиты,\nоставляет заявку", "HTTPS/TLS")
+
+Rel(existingCustomer, ibankMonolith, "Просматривает депозиты,\nподаёт заявку", "HTTPS/TLS")
+Rel(ibankMonolith, ibankDb, "Читает и сохраняет данные")
+Rel(ibankMonolith, catalogService, "Получает витрину депозитов,\nставок и персональных предложений", "HTTPS/TLS")
+Rel(ibankMonolith, applicationService, "Создаёт заявку", "HTTPS/TLS")
+Rel(ibankMonolith, notificationOtpService, "Запрашивает OTP,\nпроверяет OTP", "HTTPS/TLS")
+
+Rel(siteFrontend, catalogService, "Получает витрину депозитов и ставок", "HTTPS/TLS")
+Rel(siteFrontend, applicationService, "Подаёт заявку", "HTTPS/TLS")
+
+
+Rel(catalogService, readDb, "Читает витрину ставок")
+Rel(applicationService, appDb, "Сохраняет заявки и статусы")
+Rel(notificationOtpService, appDb, "Хранит OTP metadata и статусы")
+
+Rel(applicationService, callCenterSystem, "Передаёт лиды с сайта", "HTTPS / API")
+Rel(callOperator, callCenterSystem, "Обрабатывает заявку,\nзвонит клиенту,\nможет предложить особые условия")
+
+Rel_Up(applicationService, kafka, "Публикует событие\nDepositApplicationSubmitted")
+Rel_Left(kafka, absAdapter, "События заявок")
+Rel(absAdapter, kafka, "Публикует события\nRateApproved / DepositOpened")
+
+Rel(absAdapter, absApplicationModule, "Создаёт / обновляет заявку\nв АБС")
+Rel(absAdapter, absRateModule, "Передаёт данные для ставок\nи специальных условий")
+Rel(absAdapter, appDb, "Обновляет цифровые статусы")
+Rel(absAdapter, readDb, "Обновляет витрину ставок\nи персональные предложения")
+
+Rel(depositBackoffice, absApplicationModule, "Обрабатывает заявку,\nподтверждает условия")
+Rel(creditBackoffice, absRateModule, "Участвует в согласовании\nспециальной ставки")
+Rel(branchEmployee, absDepositModule, "Открывает депозит,\nфиксирует результат")
+
+Rel(absApplicationModule, absRateModule, "Запрашивает ставку /\nспецусловия")
+Rel(absApplicationModule, absDepositModule, "Передаёт подтверждённые\nусловия для открытия")
+Rel(absApplicationModule, absDb, "Читает и сохраняет заявки")
+Rel(absRateModule, absDb, "Читает и сохраняет ставки")
+Rel(absDepositModule, absDb, "Создаёт депозит,\nсохраняет статус и документы")
+
+Rel(kafka, notificationOtpService, "События подтверждения ставки\nи открытия депозита")
+Rel(notificationOtpService, smsGateway, "Отправляет OTP и уведомления")
+Rel(smsGateway, telco, "Передаёт сообщения")
+Rel(telco, newCustomer, "Доставляет SMS")
+Rel(telco, existingCustomer, "Доставляет SMS")
+
+SHOW_LEGEND()
+@enduml
